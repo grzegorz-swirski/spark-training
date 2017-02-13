@@ -25,7 +25,7 @@ public class GithubPushCount {
 
   public static void main(String[] args) {
 
-    String myFilesPath = "/home/grzegorz/my_files/spark_in_action_files/ch03";
+    String myFilesPath = System.getenv("TRAINING_FILES_PATH");
 
     SparkConf conf = new SparkConf().setAppName("Github push counter").setMaster("local[*]");
     JavaSparkContext sc = new JavaSparkContext(conf);
