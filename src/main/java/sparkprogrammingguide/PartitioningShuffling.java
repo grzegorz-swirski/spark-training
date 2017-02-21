@@ -54,6 +54,7 @@ public class PartitioningShuffling {
 
   private static void shuffleExample(JavaSparkContext sc, List<Tuple2<Integer, Integer>> data) {
     JavaPairRDD<Integer, Integer> distData = sc.parallelizePairs(data);
+    printPartitions(distData, "Paralellized data to be aggregated");
 
     System.out.println("Shuffle example. Data aggregated by key");
     // shuffle inside partition
@@ -63,7 +64,7 @@ public class PartitioningShuffling {
           return i;
         };
 
-    // shuffle between partitions
+    // shuffle between partitions, intermediate files are written, data is sent over the network between nodes
     Function2<List<Integer>, List<Integer>, List<Integer>> combineFunction =
         (i, j) -> {
           i.addAll(j);

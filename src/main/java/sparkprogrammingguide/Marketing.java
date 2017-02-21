@@ -101,6 +101,40 @@ public class Marketing {
         String.format(
             "Highest transactions value: customer ID=%s, transactions value=%s",
             maxTransactionsValueCustomer._1(), maxTransactionsValueCustomer._2()));
+
+    // TASK 5: find names of products with total value sold, sorted alphabetically
+    JavaPairRDD<Integer, String[]> transactionsByProductId =
+        transactions.mapToPair(
+            values -> new Tuple2<Integer, String[]>(Integer.valueOf(values[ITEM_ID_IND]), values));
+
+    JavaPairRDD<Integer, Double> transactionsValueByProductId =
+        transactionsByProductId
+            .mapValues(values -> Double.valueOf(values[TOTAL_PRICE_IND]))
+            .reduceByKey((price1, price2) -> price1 + price2);
+
+    JavaPairRDD<Integer, String[]> productsByProductId =
+        sc.textFile(productsFilePath)
+            .map(line -> line.split("#"))
+            .mapToPair(values -> new Tuple2<Integer, String[]>(Integer.valueOf(values[0]), values));
+
+    JavaPairRDD<Integer, Tuple2<Double, String[]>> transactionsValueAndProductsByProductId =
+        transactionsValueByProductId.join(
+            productsByProductId); // new RDD contains elements for which the key existed in both RDDs
+
+    JavaPairRDD<Integer, Tuple2<Double, String[]>> transactionsValueAndProductsByProductIdSorted =
+        sortValuesAndProductsByName(transactionsValueAndProductsByProductId);
+    List<Tuple2<Integer, Tuple2<Double, String[]>>> sorted =
+        transactionsValueAndProductsByProductIdSorted.collect();
+
+    // TASK 6: find a list of products not sold yesterday
+    JavaPairRDD<Integer, String[]> productsNotSoldByProductId =
+        productsByProductId.subtractByKey(transactionsByProductId);
+
+    System.out.println("\nProducts not sold yesterday");
+    productsNotSoldByProductId.foreach(
+        p -> System.out.println(String.format("Product: %s", Arrays.toString(p._2()))));
+
+    // TASK 7: statistics about transactions per customer
   }
 
   private static boolean qualifiesForPromotion(
@@ -121,5 +155,23 @@ public class Marketing {
     additionalTransaction[ITEMS_NUM_IND] = "1";
     additionalTransaction[TOTAL_PRICE_IND] = "0.0";
     return additionalTransaction;
+  }
+
+  private static JavaPairRDD sortValuesAndProductsByName(
+      JavaPairRDD<Integer, Tuple2<Double, String[]>> valueAndProductPairsById) {
+    return valueAndProductPairsById
+        .mapToPair(
+            valueAndProductById -> {
+              String productName = valueAndProductById._2()._2()[1];
+              return new Tuple2<String, Tuple2<Integer, Tuple2<Double, String[]>>>(
+                  productName, valueAndProductById);
+            })
+        .sortByKey()
+        .mapToPair(
+            pair -> {
+              Integer productId = pair._2()._1();
+              Tuple2<Double, String[]> valueAndProductById = pair._2()._2();
+              return new Tuple2<Integer, Tuple2<Double, String[]>>(productId, valueAndProductById);
+            });
   }
 }
