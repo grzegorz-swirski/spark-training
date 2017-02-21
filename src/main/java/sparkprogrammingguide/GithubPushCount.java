@@ -18,6 +18,7 @@ public class GithubPushCount {
 
   public static void main(String[] args) {
 
+    // GitHub archive for specific time period. Use eg. 'http://data.githubarchive.org/2015-03-01-{0..23}.json.gz'
     String ghArchivePath = args[0];
     String ghEmployeesPath = args[1];
 
