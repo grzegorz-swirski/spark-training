@@ -96,6 +96,19 @@ public class SparkJavaHelloWorld {
     printExample("Transformations: groupByKey");
     JavaPairRDD<String, Iterable<Integer>> grouped = pairs.groupByKey();
     System.out.println("Grouped, collected data = " + Arrays.toString(grouped.collect().toArray()));
+
+    printExample("Transformations: combineByKey");
+    JavaPairRDD<String, List<Integer>> combined = pairs.combineByKey(i -> {
+      List<Integer> initialList = new ArrayList<>();
+      initialList.add(i);
+      return initialList;
+    }, (list, i) -> {
+      list.add(i);
+      return list;
+    }, (list1, list2) -> {
+      list1.addAll(list2);
+      return list1;
+    });
   }
 
   private static void printExample(String description) {
