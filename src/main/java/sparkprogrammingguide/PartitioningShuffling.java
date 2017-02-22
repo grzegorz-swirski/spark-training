@@ -16,17 +16,35 @@ import java.util.List;
 public class PartitioningShuffling {
 
   public static void main(String[] args) {
-    String exampleFilePath = args[0];
     SparkConf conf = new SparkConf().setAppName("Partitioning and shuffling").setMaster("local[*]");
     JavaSparkContext sc = new JavaSparkContext(conf);
 
     List<Tuple2<Integer, Integer>> onesData = exampleDataSameKeys();
-    partitioningExample(sc, onesData);
-
     List<Tuple2<Integer, Integer>> data = exampleData();
-    partitioningExample(sc, data);
 
+    partitioningExample(sc, onesData);
+    partitioningExample(sc, data);
     shuffleExample(sc, data);
+  }
+
+  private static List<Tuple2<Integer, Integer>> exampleDataSameKeys() {
+    List<Tuple2<Integer, Integer>> onesData = new ArrayList<>();
+    for (int x = 1; x < 4; x++) {
+      for (int y = 1; y < 3; y++) {
+        onesData.add(new Tuple2<>(1, 1));
+      }
+    }
+    return onesData;
+  }
+
+  private static List<Tuple2<Integer, Integer>> exampleData() {
+    List<Tuple2<Integer, Integer>> data = new ArrayList<>();
+    for (int x = 1; x < 4; x++) {
+      for (int y = 1; y < 5; y++) {
+        data.add(new Tuple2<>(x, y));
+      }
+    }
+    return data;
   }
 
   private static void partitioningExample(
@@ -72,28 +90,8 @@ public class PartitioningShuffling {
         };
 
     JavaPairRDD<Integer, List<Integer>> aggregated =
-        distData.aggregateByKey(new ArrayList<Integer>(), transformFunction, combineFunction);
+        distData.aggregateByKey(new ArrayList<>(), transformFunction, combineFunction);
     printPartitions(aggregated, "Aggregated data partitions");
-  }
-
-  private static List<Tuple2<Integer, Integer>> exampleData() {
-    List<Tuple2<Integer, Integer>> data = new ArrayList<>();
-    for (int x = 1; x < 4; x++) {
-      for (int y = 1; y < 5; y++) {
-        data.add(new Tuple2<>(x, y));
-      }
-    }
-    return data;
-  }
-
-  private static List<Tuple2<Integer, Integer>> exampleDataSameKeys() {
-    List<Tuple2<Integer, Integer>> onesData = new ArrayList<>();
-    for (int x = 1; x < 4; x++) {
-      for (int y = 1; y < 3; y++) {
-        onesData.add(new Tuple2<>(1, 1));
-      }
-    }
-    return onesData;
   }
 
   private static void printPartitions(JavaPairRDD pairRdd, String message) {
